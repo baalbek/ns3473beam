@@ -11,6 +11,7 @@ import Data.Monoid ((<>))
 
 import Text.Printf (printf)
 
+import qualified NS3473.Common as C
 import qualified NS3473.Concrete as M
 import qualified NS3473.Rebars as R
 import qualified NS3473.Beams as B
