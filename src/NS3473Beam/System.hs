@@ -70,14 +70,11 @@ ccLinksCheck :: B.Beam
                 -> Maybe Double  -- ^ Shear
                 -> Maybe Double  -- ^ Moment 
                 -> Writer String Bool
-ccLinksCheck beam v m = do
+ccLinksCheck beam v m = 
     let diam = linkDiam beam
-    let minCc = B.minCcLinks beam
-    let cc = ccLinksOrDefault beam v m minCc
-    tell $ printf "[Bøyler %.0f mm] Min. cc: %.2f mm, cc: %.2f mm\n" diam minCc cc
-    return True
-
--- lnr2 x = writer (x, "Got number: " ++ show x ++ "\n")
+        minCc = B.minCcLinks beam
+        cc = ccLinksOrDefault beam v m minCc in 
+    writer (True, (printf "[Bøyler %.0f mm] Min. cc: %.2f mm, cc: %.2f mm\n" diam minCc cc))
 
 stretchRebarCheck :: B.Beam 
                      -> C.StaticMoment
