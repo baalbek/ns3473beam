@@ -27,27 +27,33 @@ data BeamSystem = BeamSystem {
                     moment :: Maybe Double
                 } deriving Show
 
+mcdWriter :: Double        -- ^ Mcd [kNm]
+             -> Double     -- ^ Moment [kNm]
+             -> Double     -- ^ Diff between mcd and moment [kNm]
+             -> Bool       -- ^ If test passes (True) or not (False)
+             -> Writer String Bool
+mcdWriter m1 m2 m3 bo = writer (bo, printf "[Beam] Mcd: %.2f kNm, dim moment: %.2f, diff: %.2f kNm" m1 m2 m3)
+
 mcdCheck :: B.Beam  
             -> Maybe Double  -- ^ Moment 
             -> Writer String Bool
-mcdCheck beam m = do 
-    let hasMoment m = do 
-        let mcd = B.mcd beam
-        let Just m' = m
-        tell $ printf "[Beam] Mcd: %.2f kNm, dim moment: %.2f, diff: %.2f kNm" mcd m' (mcd - m')
-        if mcd > m'
+mcdCheck beam m = 
+    let hasMoment m =  
+            let mcd = B.mcd beam 
+                Just m' = m in 
+            if mcd > m' 
+                then 
+                        mcdWriter mcd m' (mcd - m') True
+                    else
+                        mcdWriter mcd m' (mcd - m') False
+        noMoment m = 
+            writer (True, "Dim. moment is 0.0")
+    in if m == Nothing 
             then 
-                return True
+                noMoment m
             else
-                return False
-    let noMoment m = do 
-        tell "Dim. moment is 0.0"
-        return True
-    if m == Nothing 
-        then 
-            noMoment m
-        else
-            hasMoment m
+                hasMoment m
+        
 
 ccLinksOrDefault :: B.Beam
                     -> Maybe Double  -- ^ Shear
@@ -83,9 +89,9 @@ stretchRebarCheck beam m = do
     return True
 
 displayResult :: (Bool,String) -> IO ()
-displayResult r = do
+displayResult r =  
      --mapM_ (putStrLn . ("\t"++)) (fromDiffList $ snd r)
-    printf "\t%s\n" (snd r)
+    printf "\t%s\n" (snd r) >> 
     return ()
 
 createBeam :: BeamSystem -> B.Beam
