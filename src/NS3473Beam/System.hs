@@ -101,8 +101,7 @@ runSystem bs =
         m = moment bs 
         v = shear bs
         passedChecks what x = (fst x) == what
-        results = [runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)]
-        res1 = runWriter $ mcdCheck beam m in 
+        results = [runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
     putStrLn "OK:" >> 
     mapM_  displayResult (filter (passedChecks True) results) >> 
     putStrLn "Underdimensjonert:" >> 
