@@ -27,32 +27,23 @@ data BeamSystem = BeamSystem {
                     moment :: Maybe Double
                 } deriving Show
 
-mcdWriter :: Double        -- ^ Mcd [kNm]
-             -> Double     -- ^ Moment [kNm]
-             -> Double     -- ^ Diff between mcd and moment [kNm]
-             -> Bool       -- ^ If test passes (True) or not (False)
-             -> Writer String Bool
-mcdWriter m1 m2 m3 bo = writer (bo, printf "[Beam] Mcd: %.2f kNm, dim moment: %.2f, diff: %.2f kNm" m1 m2 m3)
-
 mcdCheck :: B.Beam  
             -> Maybe Double  -- ^ Moment 
             -> Writer String Bool
 mcdCheck beam m = 
-    let hasMoment m =  
+    let 
+        hasMoment m =  
             let mcd = B.mcd beam 
-                Just m' = m in 
-            if mcd > m' 
-                then 
-                        mcdWriter mcd m' (mcd - m') True
-                    else
-                        mcdWriter mcd m' (mcd - m') False
+                Just m' = m 
+                mcdWriter bo = writer (bo, printf "[Beam] Mcd: %.2f kNm, dim moment: %.2f, diff: %.2f kNm" mcd m' (mcd - m')) 
+            in case (mcd > m') of 
+                True -> mcdWriter True
+                False -> mcdWriter False
         noMoment m = 
             writer (True, "Dim. moment is 0.0")
-    in if m == Nothing 
-            then 
-                noMoment m
-            else
-                hasMoment m
+    in case (m == Nothing) of
+        True -> noMoment m
+        False -> hasMoment m
         
 
 ccLinksOrDefault :: B.Beam
