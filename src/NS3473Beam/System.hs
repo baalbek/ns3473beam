@@ -1,9 +1,10 @@
 {-# LANGUAGE CPP,NamedFieldPuns,RecordWildCards #-}
-module NS3473Beam.System (BeamSystem(..),runSystem) where
+module NS3473Beam.System where
+-- module NS3473Beam.System (BeamSystem(..),runSystem) where
 
 import Data.Maybe (fromJust)
 
-import Control.Monad.Writer (Writer,runWriter,tell)
+import Control.Monad.Writer (Writer,runWriter,tell,writer)
 
 import Text.Printf (printf)
 
@@ -76,6 +77,8 @@ ccLinksCheck beam v m = do
     tell $ printf "[Bøyler %.0f mm] Min. cc: %.2f mm, cc: %.2f mm\n" diam minCc cc
     return True
 
+-- lnr2 x = writer (x, "Got number: " ++ show x ++ "\n")
+
 stretchRebarCheck :: B.Beam 
                      -> C.StaticMoment
                      -> Writer String Bool
@@ -91,17 +94,17 @@ displayResult r = do
 createBeam :: BeamSystem -> B.Beam
 createBeam bs = B.defaultBeam (w bs) (h bs) 12 4
 
-
-
 runSystem :: BeamSystem -> IO ()
-runSystem bs = do
-    printf "System %s\n" (show bs)
-    let passedChecks what x = (fst x) == what
+runSystem bs =
+    printf "System %s\n" (show bs) >>
     let beam = createBeam bs
-    let m = (moment bs)
-    let v = (shear bs)
-    let results = [runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)]
-    putStrLn "OK:"
-    mapM_  displayResult $ filter (passedChecks True) results
-    putStrLn "Underdimensjonert:"
-    mapM_  displayResult $ filter (passedChecks False) results
+        m = moment bs 
+        v = shear bs
+        passedChecks what x = (fst x) == what
+        results = [runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)]
+        res1 = runWriter $ mcdCheck beam m in 
+    putStrLn "OK:" >> 
+    mapM_  displayResult (filter (passedChecks True) results) >> 
+    putStrLn "Underdimensjonert:" >> 
+    mapM_  displayResult (filter (passedChecks False) results) >>
+    return ()
