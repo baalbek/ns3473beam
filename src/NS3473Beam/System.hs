@@ -46,11 +46,11 @@ mcdCheck beam m =
                         mcdWriter mcd m' (mcd - m') True
                     else
                         mcdWriter mcd m' (mcd - m') False
-        noMoment m = 
-            writer (True, "Dim. moment is 0.0")
+        noMoment = 
+            writer (True, "[mcdCheck] Dim. moment is 0.0")
     in if m == Nothing 
             then 
-                noMoment m
+                noMoment 
             else
                 hasMoment m
         
@@ -79,14 +79,23 @@ ccLinksCheck :: B.Beam
 ccLinksCheck beam v m = 
     let diam = linkDiam beam
         minCc = B.minCcLinks beam
+        vcd = B.vcd beam 
+        -- v' = v - vcd
         cc = ccLinksOrDefault beam v m minCc in 
-    writer (True, (printf "[Bøyler %.0f mm] Min. cc: %.2f mm, cc: %.2f mm\n" diam minCc cc))
+    writer (True, (printf "[Links %.0f mm] Min. cc: %.2f mm, cc: %.2f mm\n\tvcd: %.2f, v:, links for v': " diam minCc cc vcd))
 
 stretchRebarCheck :: B.Beam 
-                     -> C.StaticMoment
+                     -> Maybe C.StaticMoment
                      -> Writer String Bool
-stretchRebarCheck beam m = do
-    return True
+stretchRebarCheck beam m = 
+    let hasMoment m = let Just m' = m
+                          mfAs' = B.mfAs beam m' in 
+                            writer (True, printf "[Beam] Lengdearmering: %.2f" mfAs') 
+    in if m == Nothing 
+            then 
+                writer (True, "[stretchRebarCheck] Dim. moment is 0.0") 
+            else
+                hasMoment m
 
 displayResult :: (Bool,String) -> IO ()
 displayResult r =  
@@ -104,7 +113,7 @@ runSystem bs =
         m = moment bs 
         v = shear bs
         passedChecks what x = (fst x) == what
-        results = [runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
+        results = [runWriter (stretchRebarCheck beam m), runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
     putStrLn "OK:" >> 
     mapM_  displayResult (filter (passedChecks True) results) >> 
     putStrLn "Underdimensjonert:" >> 
