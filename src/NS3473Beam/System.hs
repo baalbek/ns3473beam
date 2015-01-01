@@ -21,8 +21,11 @@ import NS3473.DiffList (DiffList,toDiffList,fromDiffList)
 type StringDL = DiffList String 
 
 data BeamSystem = BeamSystem {
-                    w      :: Double, -- ^ Beam width 
+                    w      :: Double,  -- ^ Beam width 
                     h      :: Double,  -- ^ Beam height
+                    rd     :: Double,  -- ^ Rebar diam  
+                    rmnt   :: Int,     -- ^ Rebar amount
+                    rlay   :: Int,     -- ^ Number of rebar layers
                     shear  :: Maybe Double, 
                     moment :: Maybe Double
                 } deriving Show
@@ -94,8 +97,12 @@ stretchRebarCheck :: B.Beam
                      -> Writer String Bool
 stretchRebarCheck beam m = 
     let hasMoment m = let Just m' = m
-                          mfAs' = B.mfAs beam m' in 
-                            writer (True, printf "[Beam] Lengdearmering: %.2f" mfAs') 
+                          mfAs' = B.mfAs beam m'  
+                          rebars = B.rebars beam
+                          curAs = R.totalSteelArea rebars 
+                          asOk = curAs > mfAs'
+                          rebarDiam = R.diam (R.rebar rebars)
+                      in writer (asOk, printf "[Lengdearmering %.0f mm] Nødv. as: %.2f mm2, curAs: %.2f mm2" rebarDiam mfAs' curAs) 
     in if m == Nothing 
             then 
                 writer (True, "[stretchRebarCheck] Dim. moment is 0.0") 
@@ -109,7 +116,14 @@ displayResult r =
     return ()
 
 createBeam :: BeamSystem -> B.Beam
-createBeam bs = B.defaultBeam (w bs) (h bs) 12 4
+createBeam bs = B.RectBeam (w bs) (h bs) myConc myRebar (B.Link 8)
+    where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' 25
+                  | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 25
+          myConc = M.newConc "35" 
+          rd' = rd bs
+          rebar = R.Rebar rd'
+          rmnt' = fromIntegral $ rmnt bs
+          rlay' = fromIntegral $ rlay bs
 
 runSystem :: BeamSystem -> IO ()
 runSystem bs =
