@@ -92,10 +92,10 @@ ccLinksCheck beam v m =
         cc = ccLinksOrDefault beam v m minCc in 
     writer (True, (printf "[Links %.0f mm] Min. cc: %.2f mm, cc: %.2f mm\n\tvcd: %.2f, v:, links for v': " diam minCc cc vcd))
 
-stretchRebarCheck :: B.Beam 
+tensileRebarCheck :: B.Beam 
                      -> Maybe C.StaticMoment
                      -> Writer String Bool
-stretchRebarCheck beam m = 
+tensileRebarCheck beam m = 
     let hasMoment m = let Just m' = m
                           mfAs' = B.mfAs beam m'  
                           rebars = B.rebars beam
@@ -105,7 +105,7 @@ stretchRebarCheck beam m =
                       in writer (asOk, printf "[Lengdearmering %.0f mm] Nødv. as: %.2f mm2, curAs: %.2f mm2" rebarDiam mfAs' curAs) 
     in if m == Nothing 
             then 
-                writer (True, "[stretchRebarCheck] Dim. moment is 0.0") 
+                writer (True, "[Tensile Rebar Check] Dim. moment is 0.0") 
             else
                 hasMoment m
 
@@ -132,7 +132,7 @@ runSystem bs =
         m = moment bs 
         v = shear bs
         passedChecks what x = (fst x) == what
-        results = [runWriter (stretchRebarCheck beam m), runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
+        results = [runWriter (tensileRebarCheck beam m), runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
     putStrLn "OK:" >> 
     mapM_  displayResult (filter (passedChecks True) results) >> 
     putStrLn "Underdimensjonert:" >> 
