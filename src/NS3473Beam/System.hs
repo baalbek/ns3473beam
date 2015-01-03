@@ -30,6 +30,19 @@ data BeamSystem = BeamSystem {
                     moment :: Maybe Double
                 } deriving Show
 
+
+vccdCheck :: B.Beam  
+            -> Maybe Double  -- ^ Shear 
+            -> Maybe Double  -- ^ Moment 
+            -> Writer String Bool
+vccdCheck beam v m = let valOrZero x = case x of Nothing -> 0.0 
+                                                 Just x' -> x'
+                         m' = valOrZero m
+                         v' = valOrZero v
+                         vccd = B.vccd beam m' 
+                         result = vccd > v'
+    in writer (result,printf "[Shear] Vccd: %.2f, shear: %.2f" vccd v')
+
 mcdCheck :: B.Beam  
             -> Maybe Double  -- ^ Moment 
             -> Writer String Bool
@@ -47,21 +60,6 @@ mcdCheck beam m =
     in case (m == Nothing) of
         True -> noMoment m
         False -> hasMoment m
-{-
-                Just m' = m in 
-            if mcd > m' 
-                then 
-                        mcdWriter mcd m' (mcd - m') True
-                    else
-                        mcdWriter mcd m' (mcd - m') False
-        noMoment = 
-            writer (True, "[mcdCheck] Dim. moment is 0.0")
-    in if m == Nothing 
-            then 
-                noMoment 
-            else
-                hasMoment m
--}
 
 ccLinksOrDefault :: B.Beam
                     -> Maybe Double  -- ^ Shear
@@ -87,10 +85,8 @@ ccLinksCheck :: B.Beam
 ccLinksCheck beam v m = 
     let diam = linkDiam beam
         minCc = B.minCcLinks beam
-        vcd = B.vcd beam 
-        -- v' = v - vcd
         cc = ccLinksOrDefault beam v m minCc in 
-    writer (True, (printf "[Links %.0f mm] Min. cc: %.2f mm, cc: %.2f mm\n\tvcd: %.2f, v:, links for v': " diam minCc cc vcd))
+    writer (True, (printf "[Links %.0f mm] Min. cc: %.2f mm, cc: %.2f mm" diam minCc cc))
 
 tensileRebarCheck :: B.Beam 
                      -> Maybe C.StaticMoment
@@ -102,7 +98,7 @@ tensileRebarCheck beam m =
                           curAs = R.totalSteelArea rebars 
                           asOk = curAs > mfAs'
                           rebarDiam = R.diam (R.rebar rebars)
-                      in writer (asOk, printf "[Lengdearmering %.0f mm] Nødv. as: %.2f mm2, curAs: %.2f mm2" rebarDiam mfAs' curAs) 
+                      in writer (asOk, printf "[Tensile Rebar %.0f mm] Required: %.2f mm2, current: %.2f mm2" rebarDiam mfAs' curAs) 
     in if m == Nothing 
             then 
                 writer (True, "[Tensile Rebar Check] Dim. moment is 0.0") 
@@ -132,9 +128,9 @@ runSystem bs =
         m = moment bs 
         v = shear bs
         passedChecks what x = (fst x) == what
-        results = [runWriter (tensileRebarCheck beam m), runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
-    putStrLn "OK:" >> 
+        results = [runWriter (vccdCheck beam v m), runWriter (tensileRebarCheck beam m), runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
+    putStrLn "Passed:" >> 
     mapM_  displayResult (filter (passedChecks True) results) >> 
-    putStrLn "Underdimensjonert:" >> 
+    putStrLn "Failed:" >> 
     mapM_  displayResult (filter (passedChecks False) results) >>
     return ()
