@@ -128,9 +128,12 @@ runSystem bs =
         m = moment bs 
         v = shear bs
         passedChecks what x = (fst x) == what
-        results = [runWriter (vccdCheck beam v m), runWriter (tensileRebarCheck beam m), runWriter (mcdCheck beam m), runWriter (ccLinksCheck beam v m)] in 
-    putStrLn "Passed:" >> 
+        results = [runWriter (vccdCheck beam v m), 
+                   runWriter (tensileRebarCheck beam m), 
+                   runWriter (mcdCheck beam m), 
+                   runWriter (ccLinksCheck beam v m)] in 
+    putStrLn "\n--------------------- Passed: ---------------------" >> 
     mapM_  displayResult (filter (passedChecks True) results) >> 
-    putStrLn "Failed:" >> 
+    putStrLn "\n--------------------- Failed: ---------------------" >> 
     mapM_  displayResult (filter (passedChecks False) results) >>
     return ()
