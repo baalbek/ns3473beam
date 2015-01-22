@@ -30,6 +30,8 @@ data BeamSystem = BeamSystem {
                     moment :: Maybe Double
                 } deriving Show
 
+numVerticalRebarLayers :: BeamSystem -> Int
+numVerticalRebarLayers s = div (rmnt s) (rlay s)
 
 vccdCheck :: B.Beam  
             -> Maybe Double  -- ^ Shear 
@@ -51,7 +53,7 @@ mcdCheck beam m =
         hasMoment m =  
             let mcd = B.mcd beam 
                 Just m' = m 
-                mcdWriter bo = writer (bo, printf "[Beam] Mcd: %.2f kNm, dim moment: %.2f, diff: %.2f kNm" mcd m' (mcd - m')) 
+                mcdWriter bo = writer (bo, printf "[Moment] Mcd: %.2f kNm, dim moment: %.2f, diff: %.2f kNm" mcd m' (mcd - m')) 
             in case (mcd > m') of 
                 True -> mcdWriter True
                 False -> mcdWriter False
@@ -105,6 +107,20 @@ tensileRebarCheck beam m =
             else
                 hasMoment m
 
+beamWidthCheck :: BeamSystem -> Writer String Bool
+beamWidthCheck s = let cover = 25.0 
+                       nvr = numVerticalRebarLayers s
+                       rebarW = (fromIntegral nvr) * (rd s)
+                       concW = fromIntegral $ (nvr - 1) * 40 
+                       totWidth = (2*cover) + rebarW + concW
+                       w' = w s 
+                       widthOk = totWidth <= w'
+                   in if widthOk == True
+                        then 
+                            writer (True, printf "[Dim %.0f mm] Beam width (%.0f mm) ok" totWidth w')
+                        else 
+                            writer (False, printf "[Dim %.0f mm] Beam width (%.0f mm) missing: %.0f mm" totWidth w' (totWidth-w'))
+
 displayResult :: (Bool,String) -> IO ()
 displayResult r =  
      --mapM_ (putStrLn . ("\t"++)) (fromDiffList $ snd r)
@@ -131,6 +147,7 @@ runSystem bs =
         results = [runWriter (vccdCheck beam v m), 
                    runWriter (tensileRebarCheck beam m), 
                    runWriter (mcdCheck beam m), 
+                   runWriter (beamWidthCheck bs), 
                    runWriter (ccLinksCheck beam v m)] in 
     putStrLn "\n--------------------- Passed: ---------------------" >> 
     mapM_  displayResult (filter (passedChecks True) results) >> 
