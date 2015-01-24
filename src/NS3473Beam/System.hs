@@ -30,14 +30,15 @@ data BeamSystem = BeamSystem {
                     moment :: Maybe Double
                 } deriving Show
 
+valOrZero :: Maybe Double -> Double
+valOrZero x = case x of Nothing -> 0.0
+                        Just x' -> x'
 
 vccdCheck :: B.Beam  
             -> Maybe Double  -- ^ Shear 
             -> Maybe Double  -- ^ Moment 
             -> Writer String Bool
-vccdCheck beam v m = let valOrZero x = case x of Nothing -> 0.0 
-                                                 Just x' -> x'
-                         m' = valOrZero m
+vccdCheck beam v m = let m' = valOrZero m
                          v' = valOrZero v
                          vccd = B.vccd beam m' 
                          result = vccd > v'
@@ -69,8 +70,7 @@ ccLinksOrDefault :: B.Beam
 ccLinksOrDefault beam v m defaultValue | cc == Nothing = defaultValue 
                                        | otherwise = fromJust cc
     where cc | v == Nothing = Nothing
-             | m == Nothing = Nothing
-             | otherwise = B.ccLinks beam (fromJust m) (fromJust v)
+             | otherwise = let m' = valOrZero m in B.ccLinks beam m' (fromJust v)
 
 rebarDiam :: B.Beam -> Double
 rebarDiam = R.diam . R.rebar . B.rebars
