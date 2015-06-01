@@ -10,8 +10,6 @@ import Text.Printf (printf)
 
 import Data.Monoid ((<>))
 
-import Text.Printf (printf)
-
 import qualified NS3473.Common as C
 import qualified NS3473.Concrete as M
 import qualified NS3473.Rebars as R
@@ -35,6 +33,14 @@ valOrZero x = case x of Nothing -> 0.0
                         Just x' -> x'
 numVerticalRebarLayers :: BeamSystem -> Int
 numVerticalRebarLayers s = div (rmnt s) (rlay s)
+
+vcdCheck :: B.Beam  
+            -> Maybe Double  -- ^ Shear 
+            -> Writer String Bool
+vcdCheck beam v = let v' = valOrZero v
+                      vcd = B.vcd beam
+                      result = vcd > v'
+    in writer (result,printf "[Shear] Vcd: %.2f, shear: %.2f" vcd v')
 
 vccdCheck :: B.Beam  
             -> Maybe Double  -- ^ Shear 
@@ -145,6 +151,7 @@ runSystem bs =
         v = shear bs
         passedChecks what x = (fst x) == what
         results = [runWriter (vccdCheck beam v m), 
+                   runWriter (vcdCheck beam v), 
                    runWriter (tensileRebarCheck beam m), 
                    runWriter (mcdCheck beam m), 
                    runWriter (beamWidthCheck bs), 
