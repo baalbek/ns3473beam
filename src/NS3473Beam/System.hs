@@ -25,7 +25,10 @@ data BeamSystem = BeamSystem {
                     rmnt   :: Int,     -- ^ Rebar amount
                     rlay   :: Int,     -- ^ Number of rebar layers
                     shear  :: Maybe Double, 
-                    moment :: Maybe Double
+                    moment :: Maybe Double,
+                    s      :: Double,  -- ^ Beam span width 
+                    xi     :: Double,  -- ^ Emodulus factor
+                    lt     :: Bool     -- ^ Use long term emodulus for deflections
                 } deriving Show
 
 valOrZero :: Maybe Double -> Double
@@ -96,6 +99,12 @@ ccLinksCheck beam v m =
         cc = ccLinksOrDefault beam v m minCc in 
     writer (True, (printf "[Links %.0f mm] Min. cc: %.2f mm, cc: %.2f mm" diam minCc cc))
 
+minAsCheck :: B.Beam 
+              -> Writer String Bool
+minAsCheck beam = 
+    let minas = B.minAs beam in 
+    writer (True, (printf "[Min. as] %.0f mm2" minas))
+
 tensileRebarCheck :: B.Beam 
                      -> Maybe C.StaticMoment
                      -> Writer String Bool
@@ -127,6 +136,20 @@ beamWidthCheck s = let cover = 25.0
                         else 
                             writer (False, printf "[Dim %.0f mm] Beam width (%.0f mm) missing: %.0f mm" totWidth w' (totWidth-w'))
 
+
+deflectionCheck :: B.Beam 
+                   -> B.DeflectionContext 
+                   -> Maybe C.StaticMoment
+                   -> Writer String Bool
+deflectionCheck beam ctx m =
+    let Just m' = m 
+        tol = 400.0
+        maxDv = (B.beamLen ctx) / tol 
+        curDv  = B.deflection beam ctx m' in 
+    case curDv > maxDv of True -> writer (False, printf "[Deflection, max %.0f mm] %.0f mm" maxDv curDv)
+                          False -> writer (True, printf "[Deflection, max %.0f mm] %.0f mm" maxDv curDv)
+
+
 displayResult :: (Bool,String) -> IO ()
 displayResult r =  
      --mapM_ (putStrLn . ("\t"++)) (fromDiffList $ snd r)
@@ -143,16 +166,20 @@ createBeam bs = B.RectBeam (w bs) (h bs) myConc myRebar (B.Link 8)
           rmnt' = fromIntegral $ rmnt bs
           rlay' = fromIntegral $ rlay bs
 
-runSystem :: BeamSystem -> IO ()
-runSystem bs =
+
+checkBeam :: BeamSystem -> IO ()
+checkBeam bs =
     printf "System %s\n" (show bs) >>
     let beam = createBeam bs
         m = moment bs 
         v = shear bs
+        dctx = B.DeflectionContext (xi bs) (s bs) 
         passedChecks what x = (fst x) == what
         results = [runWriter (vccdCheck beam v m), 
                    runWriter (vcdCheck beam v), 
+                   runWriter (minAsCheck beam), 
                    runWriter (tensileRebarCheck beam m), 
+                   runWriter (deflectionCheck beam dctx m), 
                    runWriter (mcdCheck beam m), 
                    runWriter (beamWidthCheck bs), 
                    runWriter (ccLinksCheck beam v m)] in 
@@ -160,4 +187,22 @@ runSystem bs =
     mapM_  displayResult (filter (passedChecks True) results) >> 
     putStrLn "\n--------------------- Failed: ---------------------" >> 
     mapM_  displayResult (filter (passedChecks False) results) >>
+    return ()
+
+calcDeflection :: BeamSystem -> IO ()
+calcDeflection bs =
+    let ctx = B.DeflectionContext (xi bs) (s bs) 
+        beam = createBeam bs
+        Just m = (moment bs)
+        dv = B.deflection beam ctx m in 
+    printf "Deflection %.8f mm\n" dv >>
+    return ()
+    
+calcXiFactor :: BeamSystem -> IO ()
+calcXiFactor bs =
+    let eeFn | (lt bs) == True = M.eeLt
+             | otherwise = M.ee 
+        beam = createBeam bs
+        xi = B.xiFact eeFn beam in 
+    printf "Xi factor %.8f\n" xi >>
     return ()
