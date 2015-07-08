@@ -113,21 +113,19 @@ tensileRebarCheck beam m =
             else
                 hasMoment m
 
-{-
-beamWidthCheck :: BeamSystem -> Writer String Bool
+beamWidthCheck :: CL.Main -> Writer String Bool
 beamWidthCheck s = let cover = 25.0 
                        nvr = numVerticalRebarLayers s
-                       rebarW = (fromIntegral nvr) * (rd s)
+                       rebarW = (fromIntegral nvr) * (BS.numRebars s)
                        concW = fromIntegral $ (nvr - 1) * 40 
                        totWidth = (2*cover) + rebarW + concW
-                       w' = w s 
+                       w' = BS.w s 
                        widthOk = totWidth <= w'
                    in if widthOk == True
                         then 
                             writer (True, printf "[Dim %.0f mm] Beam width (%.0f mm) ok" totWidth w')
                         else 
                             writer (False, printf "[Dim %.0f mm] Beam width (%.0f mm) missing: %.0f mm" totWidth w' (totWidth-w'))
--}
 
 deflectionCheck :: B.Beam 
                    -> B.DeflectionContext 
@@ -190,7 +188,7 @@ checkBeam opts =
                    runWriter (tensileRebarCheck beam m), 
                    runWriter (deflectionCheck beam dctx m), 
                    runWriter (mcdCheck beam m), 
-                   -- runWriter (beamWidthCheck bs), 
+                   runWriter (beamWidthCheck opts), 
                    runWriter (ccLinksCheck beam v m)] in 
     printf "Beam: %s\n" (show beam) >>
     putStrLn "\n--------------------- Passed: ---------------------" >> 
