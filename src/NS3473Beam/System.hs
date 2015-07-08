@@ -14,29 +14,34 @@ import qualified NS3473.Common as C
 import qualified NS3473.Concrete as M
 import qualified NS3473.Rebars as R
 import qualified NS3473.Beams as B
+import qualified NS3473Beam.CmdLine as CL
+import qualified NS3473Beam.BeamSystem as BS
+
 import NS3473.DiffList (DiffList,toDiffList,fromDiffList)
 
 type StringDL = DiffList String 
 
-data BeamSystem = BeamSystem {
-                    w      :: Double,  -- ^ Beam width 
-                    h      :: Double,  -- ^ Beam height
-                    rd     :: Double,  -- ^ Rebar diam  
-                    rmnt   :: Int,     -- ^ Rebar amount
-                    rlay   :: Int,     -- ^ Number of rebar layers
-                    cov    :: Double,  -- ^ Concrete cover 
-                    shear  :: Maybe Double, 
-                    moment :: Maybe Double,
-                    s      :: Double,  -- ^ Beam span width 
-                    xi     :: Double,  -- ^ Emodulus factor
-                    lt     :: Bool     -- ^ Use long term emodulus for deflections
-                } deriving Show
+{-
+let i2d x = fromIntegral (x opts)
+let s2dd x dv | curval > 0.0 = curval
+              | otherwise = dv
+        where curval = (read (x opts) :: Double) 
+
+    
+
+i2d :: CL.Main -> (CL.Main -> Int) -> Double 
+i2d opts x = fromIntegral (x opts)
+
+s2d :: CL.Main -> (CL.Main -> String) -> Double
+s2d opts x = read (x opts) :: Double
+-}
 
 valOrZero :: Maybe Double -> Double
 valOrZero x = case x of Nothing -> 0.0
                         Just x' -> x'
-numVerticalRebarLayers :: BeamSystem -> Int
-numVerticalRebarLayers s = div (rmnt s) (rlay s)
+
+numVerticalRebarLayers :: CL.Main -> Int
+numVerticalRebarLayers opts = div (CL.nd opts) (CL.nl opts)
 
 vcdCheck :: B.Beam  
             -> Maybe Double  -- ^ Shear 
@@ -123,6 +128,7 @@ tensileRebarCheck beam m =
             else
                 hasMoment m
 
+{-
 beamWidthCheck :: BeamSystem -> Writer String Bool
 beamWidthCheck s = let cover = 25.0 
                        nvr = numVerticalRebarLayers s
@@ -136,7 +142,7 @@ beamWidthCheck s = let cover = 25.0
                             writer (True, printf "[Dim %.0f mm] Beam width (%.0f mm) ok" totWidth w')
                         else 
                             writer (False, printf "[Dim %.0f mm] Beam width (%.0f mm) missing: %.0f mm" totWidth w' (totWidth-w'))
-
+-}
 
 deflectionCheck :: B.Beam 
                    -> B.DeflectionContext 
@@ -157,24 +163,40 @@ displayResult r =
     printf "\t%s\n" (snd r) >> 
     return ()
 
-createBeam :: BeamSystem -> B.Beam
-createBeam bs = B.RectBeam (w bs) (h bs) myConc myRebar (B.Link 8)
-    where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' (cov bs)
-                  | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 (cov bs)
+createBeam :: CL.Main -> B.Beam
+createBeam opts = 
+    B.RectBeam w' h' myConc myRebar (B.Link 8)
+    where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' cov'
+                  | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 cov'
+          w' = BS.w opts
+          h' = BS.h opts 
+          links' = BS.linksDiam opts
           myConc = M.newConc "35" 
-          rd' = rd bs
+          rd' = BS.rebarDiam opts
           rebar = R.Rebar rd'
-          rmnt' = fromIntegral $ rmnt bs
-          rlay' = fromIntegral $ rlay bs
+          rmnt' = BS.numRebars opts 
+          rlay' = BS.numLay opts 
+          cov' = BS.cover opts 
 
-
-checkBeam :: BeamSystem -> IO ()
-checkBeam bs =
-    printf "System %s\n" (show bs) >>
-    let beam = createBeam bs
-        m = moment bs 
-        v = shear bs
-        dctx = B.DeflectionContext (xi bs) (s bs) 
+-------------------------------------------------------------------
+-------------------- Main System functions ------------------------
+-------------------------------------------------------------------
+calcXiFactor :: CL.Main -> IO ()
+calcXiFactor opts =
+    let eeFn | (CL.lt opts) == True = M.eeLt
+             | otherwise = M.ee 
+        beam = createBeam opts
+        xi = B.xiFact eeFn beam in 
+    putStrLn (show beam) >>
+    printf "\nXi factor %.8f\n" xi >>
+    return ()
+    
+checkBeam :: CL.Main -> IO ()
+checkBeam opts =
+    let beam = createBeam opts
+        m = BS.moment opts
+        v = BS.shear opts
+        dctx = B.DeflectionContext (BS.xi opts) (BS.span opts) 
         passedChecks what x = (fst x) == what
         results = [runWriter (vccdCheck beam v m), 
                    runWriter (vcdCheck beam v), 
@@ -182,28 +204,23 @@ checkBeam bs =
                    runWriter (tensileRebarCheck beam m), 
                    runWriter (deflectionCheck beam dctx m), 
                    runWriter (mcdCheck beam m), 
-                   runWriter (beamWidthCheck bs), 
+                   -- runWriter (beamWidthCheck bs), 
                    runWriter (ccLinksCheck beam v m)] in 
+    printf "Beam: %s\n" (show beam) >>
     putStrLn "\n--------------------- Passed: ---------------------" >> 
     mapM_  displayResult (filter (passedChecks True) results) >> 
     putStrLn "\n--------------------- Failed: ---------------------" >> 
     mapM_  displayResult (filter (passedChecks False) results) >>
     return ()
 
-calcDeflection :: BeamSystem -> IO ()
-calcDeflection bs =
+{-
+calcDeflection :: CL.Main -> IO ()
+calcDeflection opts =
     let ctx = B.DeflectionContext (xi bs) (s bs) 
         beam = createBeam bs
         Just m = (moment bs)
         dv = B.deflection beam ctx m in 
     printf "Deflection %.8f mm\n" dv >>
     return ()
+  -}
     
-calcXiFactor :: BeamSystem -> IO ()
-calcXiFactor bs =
-    let eeFn | (lt bs) == True = M.eeLt
-             | otherwise = M.ee 
-        beam = createBeam bs
-        xi = B.xiFact eeFn beam in 
-    printf "Xi factor %.8f\n" xi >>
-    return ()
