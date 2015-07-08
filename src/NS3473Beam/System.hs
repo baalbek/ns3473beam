@@ -21,21 +21,6 @@ import NS3473.DiffList (DiffList,toDiffList,fromDiffList)
 
 type StringDL = DiffList String 
 
-{-
-let i2d x = fromIntegral (x opts)
-let s2dd x dv | curval > 0.0 = curval
-              | otherwise = dv
-        where curval = (read (x opts) :: Double) 
-
-    
-
-i2d :: CL.Main -> (CL.Main -> Int) -> Double 
-i2d opts x = fromIntegral (x opts)
-
-s2d :: CL.Main -> (CL.Main -> String) -> Double
-s2d opts x = read (x opts) :: Double
--}
-
 valOrZero :: Maybe Double -> Double
 valOrZero x = case x of Nothing -> 0.0
                         Just x' -> x'
@@ -150,11 +135,12 @@ deflectionCheck :: B.Beam
                    -> Writer String Bool
 deflectionCheck beam ctx m =
     let Just m' = m 
+        serviceM = m' / (B.u2s ctx)
         tol = 400.0
         maxDv = (B.beamLen ctx) / tol 
-        curDv  = B.deflection beam ctx m' in 
-    case curDv > maxDv of True -> writer (False, printf "[Deflection, max %.0f mm] %.0f mm" maxDv curDv)
-                          False -> writer (True, printf "[Deflection, max %.0f mm] %.0f mm" maxDv curDv)
+        curDv  = B.deflection beam ctx serviceM in 
+    case curDv > maxDv of True -> writer (False, printf "[Deflection, max %.0f mm, %.2f kNm] %.0f mm" maxDv serviceM curDv)
+                          False -> writer (True, printf "[Deflection, max %.0f mm, %.2f kNm] %.0f mm" maxDv serviceM curDv)
 
 
 displayResult :: (Bool,String) -> IO ()
@@ -196,7 +182,7 @@ checkBeam opts =
     let beam = createBeam opts
         m = BS.moment opts
         v = BS.shear opts
-        dctx = B.DeflectionContext (BS.xi opts) (BS.span opts) 
+        dctx = B.DeflectionContext (BS.xi opts) (BS.span opts) (BS.f opts)
         passedChecks what x = (fst x) == what
         results = [runWriter (vccdCheck beam v m), 
                    runWriter (vcdCheck beam v), 
