@@ -21,10 +21,10 @@ data Main = Main {
         d :: Int, 
         nd :: Int, 
         o :: Int,
-        hlaydist :: Int, 
-        vlaydist :: Int, 
-        numlayers :: Int, 
-        linkdiam :: Int,
+        hd :: Int, 
+        vd :: Int, 
+        nl :: Int, 
+        ld :: Int,
         s :: Int,
         x :: Int,
         lt :: Bool,
@@ -45,10 +45,10 @@ instance Attributes Main where
             d      %> [ Group "Armering", Help "Armeringsdiameter (mm) (default: 12)", ArgHelp "VAL", Default (12 :: Int) ], 
             nd     %> [ Group "Armering, paakrevet", Help "Antall armeringstenger", ArgHelp "VAL" ], 
             o      %> [ Group "Armering", Help "Overdekning (mm) (default: 25)", ArgHelp "VAL", Default (25 :: Int) ],
-            hlaydist      %> [ Group "Armering", Help "Horisontal distanse mellom armeringslag (mm) (default: 25)", ArgHelp "VAL", Default (25 :: Int) ], 
-            vlaydist      %> [ Group "Armering", Help "Vertikal distanse mellom armeringslag (mm) (default: 40)", ArgHelp "VAL", Default (40 :: Int) ], 
-            numlayers      %> [ Group "Armering", Help "Antall armeringslag (defalt: 1)", ArgHelp "VAL", Default (1 :: Int) ], 
-            linkdiam      %> [ Group "Armering", Help "Boylediameter (mm) (default: 8)", ArgHelp "VAL", Default (8 :: Int) ], 
+            hd      %> [ Group "Armering", Help "Horisontal distanse mellom armeringslag (mm) (default: 25)", ArgHelp "VAL", Default (25 :: Int) ], 
+            vd      %> [ Group "Armering", Help "Vertikal distanse mellom armeringslag (mm) (default: 40)", ArgHelp "VAL", Default (40 :: Int) ], 
+            nl      %> [ Group "Armering", Help "Antall armeringslag (defalt: 1)", ArgHelp "VAL", Default (1 :: Int) ], 
+            ld      %> [ Group "Armering", Help "Boylediameter (mm) (default: 8)", ArgHelp "VAL", Default (8 :: Int) ], 
             s %> [ Group "Deflection", Help "Span width (mm)", ArgHelp "VAL", Default (0 :: Int) ], 
             lt %> [ Group "Deflection", Help "Use long term emodulus for deflections", ArgHelp "VAL", Default True ],
             xi %> [ Group "Deflection", Help "Emodulus factor", ArgHelp "VAL", Default "0.5" ]
@@ -73,11 +73,11 @@ main = getArgs >>= executeR Main {} >>= \opts -> do
     let curH = i2d h 
     let curD = i2d d 
     let curO = i2d o 
-    let curHlaydist = i2d hlaydist      
-    let curVlaydist = i2d vlaydist      
-    let curNumlayers = i2d numlayers
-    let curLinkdiam = i2d linkdiam 
-    let system = S.BeamSystem curB curH curD (nd opts) (numlayers opts) (Just curV) (Just curM) curS curXI (lt opts)
+    let curHlaydist = i2d hd
+    let curVlaydist = i2d vd
+    let curNumlayers = i2d nl
+    let curLinkdiam = i2d ld 
+    let system = S.BeamSystem curB curH curD (nd opts) (nl opts) curO (Just curV) (Just curM) curS curXI (lt opts)
     let curX = i2d x
     case curX of 
         1 -> S.checkBeam system 

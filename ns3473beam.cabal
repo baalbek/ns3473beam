@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                ns3473beam
-version:             1.0
+version:             1.1
 -- synopsis:            
 -- description:         
 license:             GPL-3
@@ -14,7 +14,7 @@ category:            Structural Engineering
 build-type:          Simple
 cabal-version:       >=1.8
 
-executable ns3473beam-1.0
+executable ns3473beam-1.1
   main-is: Main.hs 
   -- other-modules:       
   build-depends:       base ==4.6.*

@@ -24,6 +24,7 @@ data BeamSystem = BeamSystem {
                     rd     :: Double,  -- ^ Rebar diam  
                     rmnt   :: Int,     -- ^ Rebar amount
                     rlay   :: Int,     -- ^ Number of rebar layers
+                    cov    :: Double,  -- ^ Concrete cover 
                     shear  :: Maybe Double, 
                     moment :: Maybe Double,
                     s      :: Double,  -- ^ Beam span width 
@@ -158,8 +159,8 @@ displayResult r =
 
 createBeam :: BeamSystem -> B.Beam
 createBeam bs = B.RectBeam (w bs) (h bs) myConc myRebar (B.Link 8)
-    where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' 25
-                  | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 25
+    where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' (cov bs)
+                  | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 (cov bs)
           myConc = M.newConc "35" 
           rd' = rd bs
           rebar = R.Rebar rd'
