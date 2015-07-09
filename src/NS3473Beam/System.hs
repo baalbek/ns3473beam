@@ -116,7 +116,7 @@ tensileRebarCheck beam m =
 beamWidthCheck :: CL.Main -> Writer String Bool
 beamWidthCheck s = let cover = 25.0 
                        nvr = numVerticalRebarLayers s
-                       rebarW = (fromIntegral nvr) * (BS.numRebars s)
+                       rebarW = (fromIntegral nvr) * (BS.rebarDiam s)
                        concW = fromIntegral $ (nvr - 1) * 40 
                        totWidth = (2*cover) + rebarW + concW
                        w' = BS.w s 
