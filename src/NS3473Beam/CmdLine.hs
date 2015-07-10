@@ -67,7 +67,7 @@ instance B.BeamSystem Main where
     shear opts = Just (s2d opts v)
     rebarDiam opts = i2d opts d  
     linksDiam opts = i2d opts ld
-    cover opts = (i2d opts o) + (B.linksDiam opts)
+    cover opts = (i2d opts o)  -- Nope, this is implicit + (B.linksDiam opts)
     hdist opts = i2d opts hd 
     vdist opts = i2d opts vd
     span opts = i2d opts s
