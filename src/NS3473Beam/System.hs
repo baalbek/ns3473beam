@@ -180,8 +180,9 @@ checkBeam opts =
     let beam = createBeam opts
         m = BS.moment opts
         v = BS.shear opts
-        --dctx = B.DeflectionContext (BS.xi opts) (BS.span opts) (BS.f opts)
-        dctx = B.DeflectionContext 0.1 (BS.span opts) (BS.f opts)
+        eeFn | (CL.lt opts) == True = M.eeLt
+             | otherwise = M.ee 
+        dctx = B.DeflectionContext 0.0 (BS.span opts) (BS.f opts) eeFn
         passedChecks what x = (fst x) == what
         results = [runWriter (vccdCheck beam v m), 
                    runWriter (vcdCheck beam v), 
