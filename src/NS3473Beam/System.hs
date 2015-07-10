@@ -93,8 +93,16 @@ ccLinksCheck beam v m =
 minAsCheck :: B.Beam 
               -> Writer String Bool
 minAsCheck beam = 
-    let minas = B.minAs beam in 
-    writer (True, (printf "[Min. as] %.0f mm2" minas))
+    let minas = B.minAs beam 
+        r8 = R.Rebar 8
+        r10 = R.Rebar 10
+        r12 = R.Rebar 12 
+        nfn :: R.Rebar -> Double 
+        nfn r = fromIntegral (ceiling (minas / (R.steelAreaRod r)))
+        n8 = nfn r8 
+        n10 = nfn r10
+        n12 = nfn r12 in
+    writer (True, (printf "[Min. as] %.0f mm2, Ø8=%.0f, Ø10=%.0f, Ø12=%.0f" minas n8 n10 n12))
 
 tensileRebarCheck :: B.Beam 
                      -> Maybe C.StaticMoment
