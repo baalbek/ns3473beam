@@ -1,22 +1,14 @@
 import qualified NS3473.Beams as B
-import qualified NS3473Beam.System as S
+import qualified NS3473.Rebars as R
+import qualified NS3473.Concrete as M
 
-b = S.BeamSystem 450 300 16 8 1 Nothing (Just 135)
+conc = M.newConc "25"
 
-b2 = S.BeamSystem 200 500 12 4 1 (Just 100) (Just 90.4)
+r = R.MultiRowBeamRebars (R.Rebar 20) 9 2 40 33
 
-b3 = S.BeamSystem 1000 150 12 4 1 (Just 100) (Just 35)
-b3x = S.createBeam b3
+b = B.RectBeam 350 500 conc r (B.Link 8)
 
-b4 = S.BeamSystem 1000 150 12 5 1 Nothing (Just 28)
+ee = B.een M.ee b 
 
-b5 = S.BeamSystem 200 500 12 9 2 Nothing (Just 28)
-
-{-
-b3 = S.BeamSystem 200 500 Nothing (Just 300)
-
-b4 = S.BeamSystem 200 500 (Just 700) (Just 300)
-
-b5 = S.BeamSystem 200 500 (Just 8000) Nothing
--}
+eelt = B.een M.eeLt b 
 

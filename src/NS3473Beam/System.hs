@@ -143,10 +143,11 @@ deflectionCheck beam ctx m =
     let Just m' = m 
         serviceM = m' / (B.u2s ctx)
         tol = 400.0
-        maxDv = (B.beamLen ctx) / tol 
+        bl = B.beamLen ctx
+        maxDv = bl / tol 
         curDv  = B.deflection beam ctx serviceM in 
-    case curDv > maxDv of True -> writer (False, printf "[Deflection, max %.0f mm, %.2f kNm] %.0f mm" maxDv serviceM curDv)
-                          False -> writer (True, printf "[Deflection, max %.0f mm, %.2f kNm] %.0f mm" maxDv serviceM curDv)
+    case curDv > maxDv of True -> writer (False, printf "[Deflection, max %.0f mm, %.2f kNm, span: %.0f] %.0f mm" maxDv serviceM bl curDv)
+                          False -> writer (True, printf "[Deflection, max %.0f mm, %.2f kNm, span: %.0f] %.0f mm" maxDv serviceM bl curDv)
 
 
 displayResult :: (Bool,String) -> IO ()
@@ -156,19 +157,19 @@ displayResult r =
     return ()
 
 createBeam :: CL.Main -> B.Beam
-createBeam opts = 
-    B.RectBeam w' h' myConc myRebar (B.Link 8)
-    where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' cov'
-                  | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 cov'
-          w' = BS.w opts
-          h' = BS.h opts 
-          links' = BS.linksDiam opts
-          myConc = M.newConc "35" 
-          rd' = BS.rebarDiam opts
-          rebar = R.Rebar rd'
-          rmnt' = BS.numRebars opts 
-          rlay' = BS.numLay opts 
-          cov' = BS.cover opts 
+createBeam opts = case BS.isTProfile opts of true -> B.TProfile w' h' myConc myRebar (B.Link 8) (BS.wt opts) (BS.ht opts)
+                                             false -> B.RectBeam w' h' myConc myRebar (B.Link 8)
+                    where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' cov'
+                                  | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 cov'
+                          w' = BS.w opts
+                          h' = BS.h opts 
+                          links' = BS.linksDiam opts
+                          myConc = M.newConc "35" 
+                          rd' = BS.rebarDiam opts
+                          rebar = R.Rebar rd'
+                          rmnt' = BS.numRebars opts 
+                          rlay' = BS.numLay opts 
+                          cov' = BS.cover opts 
 
 -------------------------------------------------------------------
 -------------------- Main System functions ------------------------
@@ -190,7 +191,7 @@ checkBeam opts =
         v = BS.shear opts
         eeFn | (CL.lt opts) == True = M.eeLt
              | otherwise = M.ee 
-        dctx = B.DeflectionContext 0.0 (BS.span opts) (BS.f opts) eeFn
+        dctx = B.DeflectionContext 0.0 (BS.span opts) (BS.f opts) eeFn 9.6
         passedChecks what x = (fst x) == what
         results = [runWriter (vccdCheck beam v m), 
                    runWriter (vcdCheck beam v), 
@@ -206,6 +207,24 @@ checkBeam opts =
     putStrLn "\n--------------------- Failed: ---------------------" >> 
     mapM_  displayResult (filter (passedChecks False) results) >>
     return ()
+
+showD :: CL.Main -> IO ()
+showD opts =
+    let beam = createBeam opts 
+        d' = B.calcD beam in 
+    printf "D: %.4f\n" d' >>
+    return ()
+
+showFlangeDratio :: CL.Main -> IO ()
+showFlangeDratio opts =
+    let beam = createBeam opts 
+        d' = B.calcD beam 
+        ht = B.beamHT beam 
+        r = ht / d' in
+    printf "Ratio: %.4f\n" r >>
+    return ()
+
+
 
 {-
 calcDeflection :: CL.Main -> IO ()

@@ -62,7 +62,10 @@ s2d opts x = read (x opts) :: Double
 
 instance B.BeamSystem Main where
     w opts = i2d opts b
+    wt opts = i2d opts bt
     h opts = i2d opts h
+    ht opts = i2d opts ht
+    isTProfile opts = (bt opts) > 0
     moment opts = Just (s2d opts m)
     shear opts = Just (s2d opts v)
     rebarDiam opts = i2d opts d  

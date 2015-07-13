@@ -5,7 +5,10 @@ module NS3473Beam.BeamSystem where
 
 class BeamSystem a where 
     w         :: a -> Double    -- ^ Beam width [mm]
+    wt        :: a -> Double    -- ^ Beam width [mm]
     h         :: a -> Double    -- ^ Beam height [mm]
+    ht        :: a -> Double    -- ^ Beam height [mm]
+    isTProfile :: a -> Bool
     moment    :: a -> Maybe Double 
     shear     :: a -> Maybe Double
     rebarDiam :: a -> Double    -- ^ Tensile rebars [mm]
