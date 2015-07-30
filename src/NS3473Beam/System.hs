@@ -157,8 +157,8 @@ displayResult r =
     return ()
 
 createBeam :: CL.Main -> B.Beam
-createBeam opts = case BS.isTProfile opts of true -> B.TProfile w' h' myConc myRebar (B.Link 8) (BS.wt opts) (BS.ht opts)
-                                             false -> B.RectBeam w' h' myConc myRebar (B.Link 8)
+createBeam opts = case BS.isTProfile opts of True -> B.TProfile w' h' myConc myRebar (B.Link 8) (BS.wt opts) (BS.ht opts)
+                                             False -> B.RectBeam w' h' myConc myRebar (B.Link 8)
                     where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' cov'
                                   | otherwise = R.MultiRowBeamRebars rebar rmnt' rlay' 25 cov'
                           w' = BS.w opts
