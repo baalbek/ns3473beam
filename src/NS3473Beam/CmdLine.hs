@@ -1,11 +1,34 @@
 {-# LANGUAGE FlexibleInstances,MultiParamTypeClasses,DeriveDataTypeable #-}
 module NS3473Beam.CmdLine where
 
-import GHC.Float (float2Double)
-import System.Console.CmdLib -- (Attributes,Group,Help,ArgHelp,Default,RecordCommand)
+import System.Console.CmdArgs (Data,Typeable,typ,def,groupname,help,(&=))
 import qualified NS3473Beam.BeamSystem as B 
 
-data Main = Main { 
+data CmdLine = 
+    CmdLine {
+        factorsu :: Double,
+        moment :: Double,
+        vshear :: Double,
+        width :: Int,
+        wflange :: Int,
+        nd :: Int,
+        nl :: Int,
+        lt :: Bool
+        } deriving (Show, Data, Typeable)
+
+cmdLine = CmdLine {
+    factorsu = 1.4 &= groupname "Forces" &= help "Brudd/bruksgrensefaktor (brudd divideres m/ -f). Default: 1.4",
+    moment = 0  &= groupname "Forces" &= help "Dimensjonerende moment (kNm). Default: 0",
+    vshear = 0  &= groupname "Forces" &= help "Dimensjonerende skjærkraft (kN). Default: 0",
+    width = 0  &= groupname "Geometry" &= help "Beam width (mm). Default: 0",
+    wflange = 0  &= groupname "Geometry" &= help "Beam width flange (mm). Default: 0",
+    nd = 10  &= groupname "Rebars" &= help "Number of Rebars. Default: 10",
+    nl = 1  &= groupname "Rebars" &= help "Number of Rebar layers. Default: 1",
+    lt = True  &= groupname "Deflection" &= help "Use long term emodulus for deflections. Default: True"
+    }
+    
+{-
+data Mainx = Mainx { 
         f :: String,
         v :: String,
         m :: String,
@@ -26,7 +49,7 @@ data Main = Main {
         lt :: Bool,
         xi :: String
     }
-    deriving (Typeable, Data, Eq)
+    deriving (Data, Typeable, Show)
 
 instance Attributes Main where
     attributes _ = group "Options" [
@@ -51,30 +74,4 @@ instance Attributes Main where
             xi %> [ Group "Deflection", Help "Emodulus factor", ArgHelp "VAL", Default "0.5" ]
         ]
 
-instance RecordCommand Main where
-    mode_summary _ = "NS 3473 Beams"
-
-i2d :: Main -> (Main -> Int) -> Double 
-i2d opts x = fromIntegral (x opts)
-
-s2d :: Main -> (Main -> String) -> Double
-s2d opts x = read (x opts) :: Double
-
-instance B.BeamSystem Main where
-    w opts = i2d opts b
-    wt opts = i2d opts bt
-    h opts = i2d opts h
-    ht opts = i2d opts ht
-    isTProfile opts = (bt opts) > 0
-    moment opts = Just (s2d opts m)
-    shear opts = Just (s2d opts v)
-    rebarDiam opts = i2d opts d  
-    linksDiam opts = i2d opts ld
-    cover opts = (i2d opts o)  -- Nope, this is implicit + (B.linksDiam opts)
-    hdist opts = i2d opts hd 
-    vdist opts = i2d opts vd
-    span opts = i2d opts s
-    xi opts = s2d opts xi
-    numLay opts = i2d opts nl
-    numRebars opts = i2d opts nd
-    f opts = s2d opts f
+-}

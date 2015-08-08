@@ -14,8 +14,8 @@ import qualified NS3473.Common as C
 import qualified NS3473.Concrete as M
 import qualified NS3473.Rebars as R
 import qualified NS3473.Beams as B
-import qualified NS3473Beam.CmdLine as CL
 import qualified NS3473Beam.BeamSystem as BS
+import qualified NS3473Beam.CmdLine as CL 
 
 import NS3473.DiffList (DiffList,toDiffList,fromDiffList)
 
@@ -25,7 +25,7 @@ valOrZero :: Maybe Double -> Double
 valOrZero x = case x of Nothing -> 0.0
                         Just x' -> x'
 
-numVerticalRebarLayers :: CL.Main -> Int
+numVerticalRebarLayers :: CL.CmdLine -> Int
 numVerticalRebarLayers opts = div (CL.nd opts) (CL.nl opts)
 
 vcdCheck :: B.Beam  
@@ -121,7 +121,7 @@ tensileRebarCheck beam m =
             else
                 hasMoment m
 
-beamWidthCheck :: CL.Main -> Writer String Bool
+beamWidthCheck :: CL.CmdLine -> Writer String Bool
 beamWidthCheck s = let cover = 25.0 
                        nvr = numVerticalRebarLayers s
                        rebarW = (fromIntegral nvr) * (BS.rebarDiam s)
@@ -156,7 +156,7 @@ displayResult r =
     printf "\t%s\n" (snd r) >> 
     return ()
 
-createBeam :: CL.Main -> B.Beam
+createBeam :: CL.CmdLine -> B.Beam
 createBeam opts = case BS.isTProfile opts of True -> B.TProfile w' h' myConc myRebar (B.Link 8) (BS.wt opts) (BS.ht opts)
                                              False -> B.RectBeam w' h' myConc myRebar (B.Link 8)
                     where myRebar | rlay' == 1 = R.SingleRowBeamRebars rebar rmnt' cov'
@@ -174,7 +174,7 @@ createBeam opts = case BS.isTProfile opts of True -> B.TProfile w' h' myConc myR
 -------------------------------------------------------------------
 -------------------- Main System functions ------------------------
 -------------------------------------------------------------------
-calcXiFactor :: CL.Main -> IO ()
+calcXiFactor :: CL.CmdLine -> IO ()
 calcXiFactor opts =
     let eeFn | (CL.lt opts) == True = M.eeLt
              | otherwise = M.ee 
@@ -184,7 +184,7 @@ calcXiFactor opts =
     printf "\nXi factor %.8f\n" xi >>
     return ()
     
-checkBeam :: CL.Main -> IO ()
+checkBeam :: CL.CmdLine -> IO ()
 checkBeam opts =
     let beam = createBeam opts
         m = BS.moment opts
@@ -208,14 +208,14 @@ checkBeam opts =
     mapM_  displayResult (filter (passedChecks False) results) >>
     return ()
 
-showD :: CL.Main -> IO ()
+showD :: CL.CmdLine -> IO ()
 showD opts =
     let beam = createBeam opts 
         d' = B.calcD beam in 
     printf "D: %.4f\n" d' >>
     return ()
 
-showFlangeDratio :: CL.Main -> IO ()
+showFlangeDratio :: CL.CmdLine -> IO ()
 showFlangeDratio opts =
     let beam = createBeam opts 
         d' = B.calcD beam 

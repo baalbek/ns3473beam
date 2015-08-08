@@ -1,13 +1,18 @@
-{-# LANGUAGE FlexibleInstances,MultiParamTypeClasses,DeriveDataTypeable #-}
-
+{-# LANGUAGE DeriveDataTypeable #-}
 
 import Text.Printf (printf)
 
-import System.Console.CmdLib -- (Attributes,Group,Help,ArgHelp,Default,RecordCommand)
+import System.Console.CmdArgs
 
+import NS3473Beam.CmdLine (cmdLine)
 import qualified NS3473Beam.System as S
-import qualified NS3473Beam.CmdLine as CL
 
+
+main :: IO ()
+main = cmdArgs cmdLine >>= \x -> 
+    putStrLn (show x)
+
+{-
 main :: IO ()
 main = getArgs >>= executeR CL.Main {} >>= \opts -> do
     case (CL.x opts) of 
@@ -16,5 +21,5 @@ main = getArgs >>= executeR CL.Main {} >>= \opts -> do
         3 -> S.showD opts
         4 -> S.showFlangeDratio opts
     return ()
-
+-}
 
