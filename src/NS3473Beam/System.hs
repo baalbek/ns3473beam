@@ -26,7 +26,7 @@ valOrZero x = case x of Nothing -> 0.0
                         Just x' -> x'
 
 numVerticalRebarLayers :: CL.CmdLine -> Int
-numVerticalRebarLayers opts = div (CL.nd opts) (CL.nl opts)
+numVerticalRebarLayers opts = div (CL.anumr opts) (CL.enl opts)
 
 vcdCheck :: B.Beam  
             -> Maybe Double  -- ^ Shear 
@@ -176,7 +176,7 @@ createBeam opts = case BS.isTProfile opts of True -> B.TProfile w' h' myConc myR
 -------------------------------------------------------------------
 calcXiFactor :: CL.CmdLine -> IO ()
 calcXiFactor opts =
-    let eeFn | (CL.lt opts) == True = M.eeLt
+    let eeFn | (CL.xlt opts) == False = M.eeLt
              | otherwise = M.ee 
         beam = createBeam opts
         xi = B.xiFact eeFn beam in 
@@ -189,7 +189,7 @@ checkBeam opts =
     let beam = createBeam opts
         m = BS.moment opts
         v = BS.shear opts
-        eeFn | (CL.lt opts) == True = M.eeLt
+        eeFn | (CL.xlt opts) == False = M.eeLt
              | otherwise = M.ee 
         dctx = B.DeflectionContext 0.0 (BS.span opts) (BS.f opts) eeFn 9.6
         passedChecks what x = (fst x) == what

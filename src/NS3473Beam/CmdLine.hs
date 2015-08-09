@@ -9,11 +9,20 @@ data CmdLine =
         factorsu :: Double,
         moment :: Double,
         vshear :: Double,
-        width :: Int,
-        wflange :: Int,
-        nd :: Int,
-        nl :: Int,
-        lt :: Bool
+        width :: Double,
+        height :: Double,
+        qflange :: Double,
+        zweb :: Double,
+        anumr :: Int,
+        enl :: Int,
+        xlt :: Bool,
+        ocover :: Double,
+        diam :: Double,
+        rhd :: Double,
+        brvd  :: Double,
+        links :: Double,
+        concrete :: Double,
+        spanwidth :: Double
         } deriving (Show, Data, Typeable)
 
 cmdLine = CmdLine {
@@ -21,12 +30,44 @@ cmdLine = CmdLine {
     moment = 0  &= groupname "Forces" &= help "Dimensjonerende moment (kNm). Default: 0",
     vshear = 0  &= groupname "Forces" &= help "Dimensjonerende skjærkraft (kN). Default: 0",
     width = 0  &= groupname "Geometry" &= help "Beam width (mm). Default: 0",
-    wflange = 0  &= groupname "Geometry" &= help "Beam width flange (mm). Default: 0",
-    nd = 10  &= groupname "Rebars" &= help "Number of Rebars. Default: 10",
-    nl = 1  &= groupname "Rebars" &= help "Number of Rebar layers. Default: 1",
-    lt = True  &= groupname "Deflection" &= help "Use long term emodulus for deflections. Default: True"
+    height = 0  &= groupname "Geometry" &= help "Beam height (mm). Default: 0",
+    qflange = 0  &= groupname "Geometry" &= help "Beam width flange (mm). Default: 0",
+    zweb = 0  &= groupname "Geometry" &= help "Beam height web, plate thickness (mm). Default: 0",
+    anumr = 10  &= groupname "Rebars" &= help "Number of Rebars. Default: 10",
+    enl = 1  &= groupname "Rebars" &= help "Number of Rebar layers. Default: 1",
+    ocover  = 25 &= groupname "Rebars" &= help "Use long term emodulus for deflections. Default: True",
+    diam = 12 &= groupname "Rebars" &= help "Diameter of main rebars (mm). Default: 12",
+    rhd = 25 &= groupname "Rebars" &= help "Horizontal distance between rebar layers (mm). Default: 25",
+    brvd = 40  &= groupname "Rebars" &= help "Vertical distance between rebars (mm). Default: 40",
+    links = 8  &= groupname "Rebars" &= help "Links diameter (mm). Default: 8",
+    xlt = False &= groupname "Deflection" &= help "If set, do not use long term emodulus for deflections. Default: False",
+    --xi = 0 &= groupname "Deflection" &= help "Emodulus factor. Default: 0.5",
+    spanwidth = 0.0 &= groupname "Deflection" &= help "Span width (mm).Default: 0",
+    concrete  = 25 &= groupname "Materials" &= help "Concrete class. Default: 35"
     }
     
+i2d :: CmdLine -> (CmdLine -> Int) -> Double 
+i2d opts x = fromIntegral (x opts)
+
+instance B.BeamSystem CmdLine where
+    w cl = width cl 
+    wt cl = qflange cl 
+    h cl = height cl 
+    ht cl = zweb cl 
+    isTProfile cl = (qflange cl) > 0
+    moment cl = Just (moment cl)
+    shear cl = Just (vshear cl)
+    rebarDiam cl = diam cl 
+    linksDiam cl = links cl 
+    cover cl = ocover cl  -- Note, this is implicit + (B.linksDiam opts)
+    hdist cl = rhd cl  
+    vdist cl = brvd cl 
+    span cl = spanwidth cl
+    --xi opts = s2d opts xi
+    numLay cl = i2d cl enl 
+    numRebars cl = i2d cl anumr 
+    f cl = factorsu cl 
+
 {-
 data Mainx = Mainx { 
         f :: String,
@@ -74,4 +115,22 @@ instance Attributes Main where
             xi %> [ Group "Deflection", Help "Emodulus factor", ArgHelp "VAL", Default "0.5" ]
         ]
 
+instance B.BeamSystem Main where
+    w opts = i2d opts b
+    wt opts = i2d opts bt
+    h opts = i2d opts h
+    ht opts = i2d opts ht
+    isTProfile opts = (bt opts) > 0
+    moment opts = Just (s2d opts m)
+    shear opts = Just (s2d opts v)
+    rebarDiam opts = i2d opts d  
+    linksDiam opts = i2d opts ld
+    cover opts = (i2d opts o)  -- Nope, this is implicit + (B.linksDiam opts)
+    hdist opts = i2d opts hd 
+    vdist opts = i2d opts vd
+    span opts = i2d opts s
+    xi opts = s2d opts xi
+    numLay opts = i2d opts nl
+    numRebars opts = i2d opts nd
+    f opts = s2d opts f
 -}

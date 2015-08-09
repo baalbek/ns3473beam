@@ -19,5 +19,5 @@ class BeamSystem a where
     hdist   :: a -> Double    -- ^ Horizontal distance between rebar layers [mm]
     vdist   :: a -> Double    -- ^ Horizontal distance between rebar layers [mm]
     span    :: a -> Double    -- ^ Beam span (length) [mm]
-    xi      :: a -> Double    -- ^ Emodulus factor
+    --xi      :: a -> Double    -- ^ Emodulus factor
     f       :: a -> Double    -- ^ Ultimate limit to service limit factor
