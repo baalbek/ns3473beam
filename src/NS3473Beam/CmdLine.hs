@@ -1,9 +1,56 @@
 {-# LANGUAGE FlexibleInstances,MultiParamTypeClasses,DeriveDataTypeable #-}
 module NS3473Beam.CmdLine where
 
-import GHC.Float (float2Double)
-import System.Console.CmdLib -- (Attributes,Group,Help,ArgHelp,Default,RecordCommand)
+import System.Console.CmdArgs (cmdArgs,Data,Typeable,typ,def,help,opt,groupname,(&=))
+
 import qualified NS3473Beam.BeamSystem as B 
+
+data Main = Main { 
+        f :: String 
+        ,x :: Int
+        ,v :: String
+        ,m :: String
+        ,b :: Int
+        ,bt :: Int
+        ,h :: Int 
+        ,ht :: Int 
+        ,c :: String 
+        ,d :: Int 
+        ,nd :: Int 
+        ,o :: Int
+        ,hd :: Int 
+        ,vd :: Int 
+        ,nl :: Int 
+        ,ld :: Int
+        ,s :: Int
+        ,lt :: Bool
+        ,xi :: String
+    }
+    deriving (Show, Typeable, Data)
+
+cmdLine = Main {
+        f = "1.3" &= groupname "Choice" &= help "Brudd/bruksgrensefaktor (brudd divideres m/ -f). Default: 1.3"
+        ,x = 1 &= groupname "Choice" &= help "1: calculate beam\n2: calculate xi factor\n3: calculate deflection\n\nDefault: 1"
+        ,v = "A" &= groupname "Choice" 
+        ,m = "A" &= groupname "Choice" 
+        ,b = 1 &= groupname "Choice" 
+        ,bt = 1 &= groupname "Choice" 
+        ,h = 1 &= groupname "Choice" 
+        ,ht = 1 &= groupname "Choice" 
+        ,c = "A" &= groupname "Choice" 
+        ,d = 1 &= groupname "Choice" 
+        ,nd = 1 &= groupname "Choice" 
+        ,o = 1 &= groupname "Choice" 
+        ,hd = 1 &= groupname "Choice" 
+        ,vd = 1 &= groupname "Choice" 
+        ,nl = 1 &= groupname "Choice" 
+        ,ld = 1 &= groupname "Choice" 
+        ,s = 1 &= groupname "Choice" 
+        ,lt = False &= groupname "Choice" 
+        ,xi = "A" &= groupname "Choice" 
+}
+
+{-
 
 data Main = Main { 
         f :: String,
@@ -53,6 +100,7 @@ instance Attributes Main where
 
 instance RecordCommand Main where
     mode_summary _ = "NS 3473 Beams"
+-}
 
 i2d :: Main -> (Main -> Int) -> Double 
 i2d opts x = fromIntegral (x opts)
@@ -61,6 +109,7 @@ s2d :: Main -> (Main -> String) -> Double
 s2d opts x = read (x opts) :: Double
 
 instance B.BeamSystem Main where
+    f opts = s2d opts f
     w opts = i2d opts b
     wt opts = i2d opts bt
     h opts = i2d opts h
@@ -70,11 +119,10 @@ instance B.BeamSystem Main where
     shear opts = Just (s2d opts v)
     rebarDiam opts = i2d opts d  
     linksDiam opts = i2d opts ld
-    cover opts = (i2d opts o)  -- Nope, this is implicit + (B.linksDiam opts)
+    cover opts = (i2d opts o)  
     hdist opts = i2d opts hd 
     vdist opts = i2d opts vd
     span opts = i2d opts s
     xi opts = s2d opts xi
     numLay opts = i2d opts nl
     numRebars opts = i2d opts nd
-    f opts = s2d opts f

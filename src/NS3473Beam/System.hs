@@ -1,4 +1,7 @@
-{-# LANGUAGE CPP,NamedFieldPuns,RecordWildCards #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 module NS3473Beam.System where
 -- module NS3473Beam.System (BeamSystem(..),runSystem) where
 
