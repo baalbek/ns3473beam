@@ -29,10 +29,10 @@ data Main = Main {
     deriving (Show, Typeable, Data)
 
 cmdLine = Main {
-        f = "1.3" &= groupname "Choice" &= help "Brudd/bruksgrensefaktor (brudd divideres m/ -f). Default: 1.3"
+        f = "1.3" &= groupname "Krefter" &= help "Brudd/bruksgrensefaktor (brudd divideres m/ -f). Default: 1.3"
         ,x = 1 &= groupname "Choice" &= help "1: calculate beam\n2: calculate xi factor\n3: calculate deflection\n\nDefault: 1"
-        ,v = "A" &= groupname "Choice" 
-        ,m = "A" &= groupname "Choice" 
+        ,v = "0.0" &= groupname "Krefter" &= help "Dimensjonerende skjaerkraft (kN). Default: 0.0"
+        ,m = "0.0" &= groupname "Krefter" &= help "Dimensjonerende moment (kNm). Default: 0.0"
         ,b = 1 &= groupname "Choice" 
         ,bt = 1 &= groupname "Choice" 
         ,h = 1 &= groupname "Choice" 
