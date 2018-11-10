@@ -10,10 +10,12 @@ conc = M.newConc "25"
 
 r = R.MultiRowBeamRebars (R.Rebar 20)  20 1 40 33
 
-b = B.RectBeam 1000 300 conc r (B.Link 8)
+b = B.RectBeam 100 100 conc r (B.Link 8)
 
 ee = B.een M.ee b 
 
 eelt = B.een M.eeLt b 
 
 defl = S.deflectionCheck b ctx (Just 36)
+
+mcd = B.mcd b

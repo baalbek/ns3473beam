@@ -20,9 +20,9 @@ import qualified NS3473.Beams as B
 import qualified NS3473Beam.CmdLine as CL
 import qualified NS3473Beam.BeamSystem as BS
 
-import NS3473.DiffList (DiffList,toDiffList,fromDiffList)
+-- import NS3473.DiffList (DiffList,toDiffList,fromDiffList)
 
-type StringDL = DiffList String 
+-- type StringDL = DiffList String 
 
 valOrZero :: Maybe Double -> Double
 valOrZero x = case x of Nothing -> 0.0

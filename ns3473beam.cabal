@@ -17,11 +17,11 @@ cabal-version:       >=1.8
 executable ns3473beam-3.0
   main-is: Main.hs 
   -- other-modules:       
-  build-depends:       base ==4.9.*
-                       ,HUnit >= 1.4.0.0
+  build-depends:       base >= 4.9
+                       ,HUnit >= 1.6
                        -- ,hmatrix >= 0.17.0.2
                        ,containers >= 0.5.0.0 && < 0.6
-                       ,mtl >= 2.2.1
-                       ,cmdargs >= 0.10.14
+                       ,mtl >= 2.2
+                       ,cmdargs >= 0.10
   hs-source-dirs: src
   ghc-options: -Wall -fno-warn-unused-do-bind
